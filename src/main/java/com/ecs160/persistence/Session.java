@@ -1,6 +1,5 @@
 package com.ecs160.persistence;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -33,12 +32,9 @@ public class Session {
         objBuffer.add(obj);
     }
 
+    // (Optional: This method is not used and can be removed)
     private static Jedis connectToJedis() {
         try (Jedis jedis = new Jedis("localhost", PORT_NUMBER)) {
-            // jedis.auth("password");
-            // System.out.println("Connection Successful");
-            // System.out.println("Ping: " + jedis.ping());
-            // jedis.flushAll();
             return jedis;
         }
     }
@@ -61,7 +57,7 @@ public class Session {
     /*
      * Gets the id string from a persisted object (i.e. an object that has been
      * persisted with persistAll).
-     * IMPORTANT NOTE: assumes object id is already inside the @PersistableId-annotated field
+     * IMPORTANT: assumes object id is already inside the @PersistableId-annotated field.
      */
     private static String getPersistedObjIdString(Object partialObject) {
         Class<?> clazz = partialObject.getClass();
@@ -71,7 +67,7 @@ public class Session {
                 field.setAccessible(true);
                 try {
                     ret = field.get(partialObject).toString();
-                    break; // we found the id field, no need to look through any other fields
+                    break; // found the id field
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -92,15 +88,18 @@ public class Session {
         return ret;
     }
 
+    // Only assign a new ID if the current value is -1 (or null)
     public void setObjId(Object obj) {
-        System.out.println("setting obj id for " + obj.getClass().getName() + " with id " + current_id);
         Class<?> clazz = obj.getClass();
         for (Field field : clazz.getDeclaredFields()) {
             if (field.isAnnotationPresent(PersistableId.class)) {
                 field.setAccessible(true);
                 try {
-                    field.set(obj, current_id);
-                    current_id++;
+                    Object currentValue = field.get(obj);
+                    if (currentValue == null || ((Integer) currentValue) == -1) {
+                        field.set(obj, current_id);
+                        current_id++;
+                    }
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -110,7 +109,6 @@ public class Session {
 
     public void persistObject(Object targetObj) throws IllegalArgumentException, IllegalAccessException {
         if (persistedHashCodes.contains(targetObj.hashCode())) {
-            System.out.println("already persisted " + targetObj.getClass().getName());
             return;
         }
         Class<?> clazz = targetObj.getClass();
@@ -119,17 +117,14 @@ public class Session {
         }
         setObjId(targetObj);
 
-        // set the id equal to the current_id
         String objStringId = getObjectId(targetObj);
 
-        // persistable field is just written as is,
-        // persistable list field persists all the IDs in a comma-separated list
+        // Persist fields annotated with @PersistableField
         for (Field field : getAllFields(targetObj)) {
             if (field.isAnnotationPresent(PersistableField.class)) {
                 field.setAccessible(true);
                 Object value = field.get(targetObj);
                 String valueStr = (value != null) ? value.toString() : "";
-                System.out.println("Persisting field: " + field.getName() + " with value: " + valueStr + " for id " + objStringId);
                 jedis.hset(objStringId, field.getName(), valueStr);
             } else if (field.isAnnotationPresent(PersistableListField.class)) {
                 field.setAccessible(true);
@@ -145,8 +140,9 @@ public class Session {
                 }
                 jedis.hset(objStringId, field.getName(), persistedIdList.toString());
             } else if (field.isAnnotationPresent(PersistableId.class)) {
+                // Persist the ID value as well
                 field.setAccessible(true);
-                field.set(targetObj, Integer.parseInt(objStringId)); // set the ID of the object to the current ID
+                jedis.hset(objStringId, field.getName(), field.get(targetObj).toString());
             }
         }
         persistedHashCodes.add(targetObj.hashCode());
@@ -160,8 +156,7 @@ public class Session {
     }
 
     public Object load(Object object) {
-        // get the id from the field of object with annotation
-        // Loads an object from Redis based on its ID field
+        // Load an object from Redis based on its ID field.
         String objId = getPersistedObjIdString(object);
         if (objId == null || objId.isEmpty()) {
             System.err.println("Invalid object id for loading.");
@@ -177,9 +172,20 @@ public class Session {
             return null;
         }
 
-        // IMPORTANT NOTE: assumes object id is already inside the @PersistableId-annotated field
+        // Load fields
         for (Field field : getAllFields(ret)) {
-            if (field.isAnnotationPresent(PersistableField.class)) {
+            if (field.isAnnotationPresent(PersistableId.class)) {
+                // Load the ID field from Redis.
+                field.setAccessible(true);
+                String storedValue = jedis.hget(objId, field.getName());
+                try {
+                    if (field.getType() == Integer.class && storedValue != null && !storedValue.isEmpty()) {
+                        field.set(ret, Integer.parseInt(storedValue));
+                    }
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            } else if (field.isAnnotationPresent(PersistableField.class)) {
                 field.setAccessible(true);
                 String storedValue = jedis.hget(objId, field.getName());
                 try {
@@ -194,7 +200,7 @@ public class Session {
                 }
             } else if (field.isAnnotationPresent(PersistableListField.class)) {
                 field.setAccessible(true);
-                // If the field is annotated with @LazyLoad, create a dynamic proxy
+                // If field is annotated with @LazyLoad, create a dynamic proxy.
                 if (field.isAnnotationPresent(LazyLoad.class)) {
                     @SuppressWarnings("unchecked")
                     List<Object> lazyProxy = (List<Object>) Proxy.newProxyInstance(
@@ -208,7 +214,7 @@ public class Session {
                         e.printStackTrace();
                     }
                 } else {
-                    // Otherwise, load the list immediately
+                    // Otherwise, load the list immediately.
                     String storedIds = jedis.hget(objId, field.getName());
                     List<Object> loadedList = new ArrayList<>();
                     if (storedIds != null && !storedIds.isEmpty()) {
@@ -244,8 +250,7 @@ public class Session {
         return ret;
     }
 
-    //lazy loading fields.
-    //I made it Dynamic proxy handler, loading until a method is invoked on the list.
+    // Dynamic proxy handler for lazy loading list fields.
     private class LazyListHandler implements InvocationHandler {
         private String parentId;
         private Field field;
@@ -292,7 +297,7 @@ public class Session {
         }
     }
 
-    // Closes the Jedis connection
+    // Closes the Jedis connection.
     public void close() {
         if (jedis != null) {
             jedis.close();
