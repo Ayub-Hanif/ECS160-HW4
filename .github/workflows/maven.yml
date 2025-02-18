@@ -1,8 +1,8 @@
 name: Maven Build and Test
 on: [push]
+
 jobs:
   Maven-Build-Test-Action:
-  build:
     runs-on: ubuntu-latest
     services:
       redis:
@@ -21,4 +21,3 @@ jobs:
 
       - name: Build with Maven
         run: mvn clean install
-
