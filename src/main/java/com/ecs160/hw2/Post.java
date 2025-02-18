@@ -4,24 +4,29 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ecs160.persistence.PersistenceAnnotations;
 import com.ecs160.persistence.PersistenceAnnotations.Persistable;
 import com.ecs160.persistence.PersistenceAnnotations.PersistableField;
 import com.ecs160.persistence.PersistenceAnnotations.PersistableId;
 import com.ecs160.persistence.PersistenceAnnotations.PersistableListField;
+import com.ecs160.persistence.PersistenceAnnotations.LazyLoad;
+
 
 @Persistable
 public class Post {
     @PersistableId
-    private final Integer post_Id;
+    private Integer post_Id;
 
     @PersistableField
-    private final String post_content;
+    private String post_content;
 
     @PersistableField
-    private final Integer word_count;
+    private Integer word_count;
+
 
     @PersistableListField(className = "com.ecs160.hw2.Post")
-    private final List<Post> post_replies;
+    @LazyLoad //lazy loading (Session.load)
+    private List<Post> post_replies;
 
     public Post(String post_content, Timestamp creation_time, int word_count) {
         this.post_Id = -1; // placeholder
@@ -66,8 +71,7 @@ public class Post {
 
     public String toString() {
         String ret = "===\n" + "Post ID: " + post_Id + " | " + "Word Count: " + word_count + " | " + "Num Replies: "
-                + post_replies.size();
-        ret += "\n" + "Content: " + post_content + "\n===";
+                + post_replies.size() + "\n" + "Content: " + post_content + "\n===";
         return ret;
         // return "Post ID: " + post_Id + " | " +
         // "Content: " + post_content + " | " +
