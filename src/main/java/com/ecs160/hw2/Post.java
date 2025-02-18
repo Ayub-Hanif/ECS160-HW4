@@ -63,4 +63,16 @@ public class Post {
     public void add_reply_under_post(Post reply) {
         this.post_replies.add(reply);
     }
+
+    public String toString() {
+        String ret = "===\n" + "Post ID: " + post_Id + " | " + "Word Count: " + word_count + " | " + "Num Replies: "
+                + post_replies.size();
+        ret += "\n" + "Content: " + post_content + "\n===";
+        return ret;
+        // return "Post ID: " + post_Id + " | " +
+        // "Content: " + post_content + " | " +
+        // "Word Count: " + word_count + " | " +
+        // "Num Replies: " + post_replies.size();
+
+    }
 }

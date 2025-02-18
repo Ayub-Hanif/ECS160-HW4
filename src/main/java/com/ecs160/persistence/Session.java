@@ -17,6 +17,7 @@ public class Session {
     private List<Object> objBuffer = new ArrayList<Object>();
     private static int PORT_NUMBER = 6379;
     private Integer current_id = 1;
+    private List<Integer> persistedHashCodes = new ArrayList<>();
 
     public Session() {
         Jedis jedis = connectToJedis();
@@ -56,30 +57,6 @@ public class Session {
         throw new RuntimeException("findIdField couldn't find PersistableId annotation on given object");
     }
 
-    // private static String getObjStringIdentifier(Object obj) { // get the
-    // identifier for this object
-    // Class<?> clazz = obj.getClass();
-    // String className = clazz.getName();
-    // String id = getObjectId(obj);
-    // StringBuilder classWithId = new StringBuilder(className);
-    // classWithId.append(":");
-    // classWithId.append(id);
-    // return classWithId.toString(); // e.g. Post:1000
-    // }
-
-    // private static String makeObjStringId(Object obj) {
-    // Class<?> clazz = obj.getClass();
-    // String className = clazz.getName();
-    // StringBuilder classWithId = new StringBuilder(className);
-    // classWithId.append(":");
-    // classWithId.append(current_id++);
-    // return classWithId.toString();
-    // }
-
-    // private static String makeObjIdString(String className, int id){
-    // return className + ":" + id;
-    // }
-
     /*
      * Gets the id string from a persisted object (i.e. an object that has been
      * persisted
@@ -108,70 +85,93 @@ public class Session {
         return ret;
     }
 
-    public void persistAll() throws IllegalArgumentException, IllegalAccessException {
-        Jedis jedis = connectToJedis();
-        for (Object obj : objBuffer) {
-            Class<?> clazz = obj.getClass();
+    private static List<Field> getAllFields(Object obj) {
+        Class<?> clazz = obj.getClass();
+        List<Field> ret = new ArrayList<>();
+        while (clazz != null) {
             Field[] fields = clazz.getDeclaredFields();
-            if (!clazz.isAnnotationPresent(Persistable.class)) {
-                continue;
-            }
             for (Field field : fields) {
-                if (field.isAnnotationPresent(PersistableId.class)) {
-                    field.setAccessible(true);
+                ret.add(field);
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return ret;
+    }
+
+    public void setObjId(Object obj) {
+        System.out.println("setting obj id for " + obj.getClass().getName() + " with id " + current_id);
+        Class<?> clazz = obj.getClass();
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(PersistableId.class)) {
+                field.setAccessible(true);
+                try {
                     field.set(obj, current_id);
                     current_id++;
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
         }
-        for (Object targetObj : objBuffer) {
-            Class<?> clazz = targetObj.getClass();
-            Field[] fields = clazz.getDeclaredFields();
-            if (!clazz.isAnnotationPresent(Persistable.class)) {
-                continue;
-            }
+    }
 
-            // set the id equal to the current_id
-            String objStringId = getObjectId(targetObj);
-            // System.out.println("persisted with id = " + objStringId);
-            // current_id++;
+    public void persistObject(Object targetObj, Jedis jedis) throws IllegalArgumentException, IllegalAccessException {
+        if (persistedHashCodes.contains(targetObj.hashCode())) {
+            System.out.println("already persisted " + targetObj.getClass().getName());
+            return;
+        }
+        Class<?> clazz = targetObj.getClass();
+        if (!clazz.isAnnotationPresent(Persistable.class)) {
+            return;
+        }
+        setObjId(targetObj);
 
-            // String id = getObjectId(targetObj);
-            // assert (id != "");
+        // set the id equal to the current_id
+        // setObjId(targetObj);
+        String objStringId = getObjectId(targetObj);
 
-            // save all persistable fields under the ID specified by the annotation
-            // persistable field is just written as is,
-            // persistable list field persists all the IDs in a comma-separated list
-            for (Field field : fields) {
-                if (field.isAnnotationPresent(PersistableField.class)) {
-                    field.setAccessible(true);
-                    System.out.println("persisted field name = " + field.getName() + " with value = "
-                            + field.get(targetObj).toString() + " for id " + objStringId);
-                    jedis.hset(objStringId, field.getName(), field.get(targetObj).toString()); // persist
-                                                                                               // the
-                                                                                               // field
-                } else if (field.isAnnotationPresent(PersistableListField.class)) {
-                    field.setAccessible(true);
+        // persistable field is just written as is,
+        // persistable list field persists all the IDs in a comma-separated list
+        for (Field field : getAllFields(targetObj)) {
+            if (field.isAnnotationPresent(PersistableField.class)) {
+                field.setAccessible(true);
+                System.out.println("persisted field name = " + field.getName() + " with value = "
+                        + field.get(targetObj).toString() + " for id " + objStringId);
+                jedis.hset(objStringId, field.getName(), field.get(targetObj).toString()); // persist
+                                                                                           // the
+                                                                                           // field
+            } else if (field.isAnnotationPresent(PersistableListField.class)) {
+                field.setAccessible(true);
 
-                    StringBuilder persistedIdList = new StringBuilder(); // comma separated list of IDs
-                    List<Object> itemList = (List) field.get(targetObj);
-                    if (itemList.isEmpty()) {
+                StringBuilder persistedIdList = new StringBuilder(); // comma separated list of IDs
+                List<Object> itemList = (List) field.get(targetObj);
+                if (itemList.isEmpty()) {
+                    persistedIdList.append(",");
+                } else {
+                    for (Object item : itemList) {
+                        // setObjId(item);
+                        persistObject(item, jedis); // the child object also needs to be persisted!
+                        System.out.println("saving list item with id = " + getObjectId(item));
+                        persistedIdList.append(getObjectId(item)); // ID
                         persistedIdList.append(",");
-                    } else {
-                        for (Object item : itemList) {
-                            System.out.println("saving list item with id = " + getObjectId(item));
-                            persistedIdList.append(getObjectId(item)); // ID
-                            persistedIdList.append(",");
-                        }
-                        persistedIdList.deleteCharAt(persistedIdList.length() - 1); // remove trailing comma
                     }
-
-                    jedis.hset(objStringId, field.getName(), persistedIdList.toString());
-                } else if (field.isAnnotationPresent(PersistableId.class)) {
-                    field.setAccessible(true);
-                    field.set(targetObj, Integer.parseInt(objStringId)); // set the ID of the object to the current ID
+                    persistedIdList.deleteCharAt(persistedIdList.length() - 1); // remove trailing comma
                 }
+
+                jedis.hset(objStringId, field.getName(), persistedIdList.toString());
+            } else if (field.isAnnotationPresent(PersistableId.class)) {
+                field.setAccessible(true);
+                field.set(targetObj, Integer.parseInt(objStringId)); // set the ID of the object to the current ID
             }
+        }
+        persistedHashCodes.add(targetObj.hashCode());
+    }
+
+    public void persistAll() throws IllegalArgumentException, IllegalAccessException {
+        Jedis jedis = connectToJedis();
+        for (Object obj : objBuffer) {
+            persistObject(obj, jedis);
         }
         objBuffer.clear();
     }
@@ -187,18 +187,19 @@ public class Session {
 
         // IMPORTANT NOTE: assumes object id is already inside the
         // @PersistableId-annotated field
-        for (Field f : fields) {
+        for (Field f : getAllFields(ret)) {
             if (f.isAnnotationPresent(PersistableField.class)) {
                 f.setAccessible(true);
-                System.out.println("load field " + f.getName() + " with id = " + getPersistedObjIdString(object));
+                // System.out.println("load field " + f.getName() + " with id = " +
+                // getPersistedObjIdString(object));
                 Object fieldValue = jedis.hget(getPersistedObjIdString(object), f.getName());
-                System.out.println("the field value was " + fieldValue.toString());
+                // System.out.println("the field value was " + fieldValue.toString());
                 try {
                     Class<?> type = f.getType();
                     if (type == String.class) {
                         f.set((Object) ret, fieldValue);
                     } else if (type == Integer.class) {
-                        System.out.println("setting int field " + f.getName());
+                        // System.out.println("setting int field " + f.getName());
                         Integer newValue = Integer.parseInt(fieldValue.toString());
                         f.set((Object) ret, newValue);
                     }
@@ -209,18 +210,19 @@ public class Session {
             } else if (f.isAnnotationPresent(PersistableListField.class)) {
                 f.setAccessible(true);
                 String objectIds = jedis.hget(getPersistedObjIdString(object), f.getName());
-                System.out.println("objectIds = " + objectIds);
+                // System.out.println("objectIds = " + objectIds);
                 String[] ids = objectIds.split(",");
                 List<Object> loadedObjects = new ArrayList<>();
                 for (String id : ids) {
                     try {
-                        System.out
-                                .println("for class name = " + f.getAnnotation(PersistableListField.class).className());
+                        // System.out
+                        // .println("for class name = " +
+                        // f.getAnnotation(PersistableListField.class).className());
                         Class<?> loadedObjClass = Class
                                 .forName(f.getAnnotation(PersistableListField.class).className());
                         Constructor<?> loadedObj = loadedObjClass.getDeclaredConstructor();
                         Object obj = loadedObj.newInstance();
-                        for (Field field : obj.getClass().getFields()) {
+                        for (Field field : obj.getClass().getDeclaredFields()) {
                             if (field.isAnnotationPresent(PersistableId.class)) {
                                 field.setAccessible(true);
                                 field.set(obj, Integer.parseInt(id)); // set the id of this object to the id seen in db
@@ -228,9 +230,9 @@ public class Session {
                         }
 
                         // load the object with load (recursively)
-                        System.out.println("loading recusively with id = " + id);
+                        // System.out.println("loading recusively with id = " + id);
                         obj = load(obj);
-                        System.out.println("loaded!");
+                        // System.out.println("loaded!");
 
                         // populate loadedObjects array with result object
                         loadedObjects.add(obj);
