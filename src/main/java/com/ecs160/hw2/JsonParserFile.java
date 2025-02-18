@@ -22,7 +22,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-
 public class JsonParserFile {
     public List<Post> json_parser(String filePath) {
         List<Post> posts_file = new ArrayList<>();
@@ -38,7 +37,6 @@ public class JsonParserFile {
                     System.err.println("File not found: " + filePath);
                 }
             }
-
 
             Reader file_reader = new InputStreamReader(input_file);
             JsonElement parse_element = JsonParser.parseReader(file_reader);
@@ -70,25 +68,27 @@ public class JsonParserFile {
         String post_content = post_object.getAsJsonObject("record").get("text").getAsString();
         int postId;
         if (parent_postId == null) {
-            //we will be using the Universally Unique Identifier which uses 128-bit value.
+            // we will be using the Universally Unique Identifier which uses 128-bit value.
             postId = UUID.randomUUID().toString().hashCode();
 
-        } else {postId = (post_content + parent_postId).hashCode();}
+        } else {
+            postId = (post_content + parent_postId).hashCode();
+        }
 
         String create_string = post_object.getAsJsonObject("record").get("createdAt").getAsString();
         Timestamp when_created = Timestamp.from(Instant.parse(create_string));
 
         /*
-            \\s+, is the best thing to use.
-            Matches any whitespace character, including:
-                Space    (  )
-                Tabs     (\t)
-                Newlines (\n)
-             We can count the number of words using this and then find the largest post.
+         * \\s+, is the best thing to use.
+         * Matches any whitespace character, including:
+         * Space ( )
+         * Tabs (\t)
+         * Newlines (\n)
+         * We can count the number of words using this and then find the largest post.
          */
         int word_count = post_content.split("\\s+").length;
 
-        return new Post(postId, post_content, when_created, word_count);
+        return new Post(post_content, when_created, word_count);
     }
 
     private void parse_replies(JsonArray replies_array, Post parent_posts) {
@@ -105,4 +105,3 @@ public class JsonParserFile {
         }
     }
 }
-
