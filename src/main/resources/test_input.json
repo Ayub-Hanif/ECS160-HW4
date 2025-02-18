@@ -1,0 +1,58 @@
+{
+  "feed": [
+    {
+      "thread": {
+        "$type": "app.bsky.feed.defs#threadViewPost",
+        "post": {
+          "uri": "at://did:plc:f3ogrsjaauomtyodoxmyuuig/app.bsky.feed.post/3lcwmcsikis23",
+          "cid": "bafyreihm4gh2sqcizqmg2dgfmjfcjnp43qxzv26i2zjfs2ck4hegwuzjni",
+          "author": {
+            "did": "did:plc:f3ogrsjaauomtyodoxmyuuig",
+            "handle": "marktucker.bsky.social",
+            "displayName": "Mark Tucker",
+            "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:f3ogrsjaauomtyodoxmyuuig/bafkreiel2wa2gm6zorygjq6r3spuitayxrj2ao56lr6o7nx5p4pvlqthei@jpeg",
+            "viewer": {
+              "muted": false,
+              "blockedBy": false
+            },
+            "labels": [],
+            "createdAt": "2023-07-17T21:13:20.284Z"
+          },
+          "record": {
+            "$type": "app.bsky.feed.post",
+            "createdAt": "2024-12-10T06:26:59.479Z",
+            "facets": [
+              {
+                "features": [
+                  {
+                    "$type": "app.bsky.richtext.facet#tag",
+                    "tag": "atproto"
+                  }
+                ],
+                "index": {
+                  "byteEnd": 47,
+                  "byteStart": 39
+                }
+              }
+            ],
+            "langs": [
+              "en"
+            ],
+            "text": "Which feeds includes posts marked with #atproto?"
+          },
+          "replyCount": 0,
+          "repostCount": 0,
+          "likeCount": 0,
+          "quoteCount": 0,
+          "indexedAt": "2024-12-10T06:27:00.155Z",
+          "viewer": {
+            "threadMuted": false,
+            "embeddingDisabled": false
+          },
+          "labels": []
+        },
+        "replies": []
+      }
+    }
+  ]
+}
