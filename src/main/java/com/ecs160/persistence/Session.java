@@ -1,7 +1,6 @@
 package com.ecs160.persistence;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -193,7 +192,6 @@ public class Session {
         Object proxyObject;
         try {
             proxyObject = proxyClass.getDeclaredConstructor().newInstance();
-
             ((javassist.util.proxy.Proxy) proxyObject).setHandler(methodHandler);
             return proxyObject;
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
@@ -296,54 +294,6 @@ public class Session {
             return createProxy(ret);
         } else {
             return ret;
-        }
-    }
-
-    // Dynamic proxy handler for lazy loading list fields.
-    private class LazyListHandler implements InvocationHandler {
-        private String parentId;
-        private Field field;
-        private List<Object> loadedList; // Cached delegate list
-
-        public LazyListHandler(String parentId, Field field) {
-            this.parentId = parentId;
-            this.field = field;
-        }
-
-        private void loadIfNeeded() {
-            if (loadedList == null) {
-                loadedList = new ArrayList<>();
-                String storedIds = jedis.hget(parentId, field.getName());
-                if (storedIds != null && !storedIds.isEmpty()) {
-                    String[] ids = storedIds.split(",");
-                    for (String idStr : ids) {
-                        if (idStr.trim().isEmpty())
-                            continue;
-                        try {
-                            Class<?> listElementClass = Class.forName(
-                                    field.getAnnotation(PersistableListField.class).className());
-                            Object listElement = listElementClass.getDeclaredConstructor().newInstance();
-                            for (Field f : getAllFields(listElement)) {
-                                if (f.isAnnotationPresent(PersistableId.class)) {
-                                    f.setAccessible(true);
-                                    f.set(listElement, Integer.parseInt(idStr));
-                                    break;
-                                }
-                            }
-                            listElement = load(listElement);
-                            loadedList.add(listElement);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            loadIfNeeded();
-            return method.invoke(loadedList, args);
         }
     }
 
