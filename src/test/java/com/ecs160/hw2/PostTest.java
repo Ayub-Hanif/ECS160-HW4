@@ -14,9 +14,9 @@ class PostTest {
         Timestamp timestamp = Timestamp.valueOf("2024-12-10 06:26:59");
         Post post = new Post("Test post content", timestamp, 5);
 
-        assertEquals(-1, post.get_post_Id());
-        assertEquals("Test post content", post.get_post_content());
-        assertEquals(5, post.get_word_count());
+        // assertEquals(-1, post.getPostId());
+        assertEquals("Test post content", post.getPostContent());
+        assertEquals(5, post.getWordCount());
     }
 
     @Test
@@ -25,9 +25,9 @@ class PostTest {
         Post post = new Post("Parent post", timestamp, 3);
 
         Post reply = new Post("Reply post", timestamp, 2);
-        post.add_reply_under_post(reply);
+        post.addReplyUnderPost(reply);
 
-        assertEquals(1, post.get_post_replies().size());
-        assertEquals("Reply post", post.get_post_replies().getFirst().get_post_content());
+        assertEquals(1, post.getReplies().size());
+        assertEquals("Reply post", post.getReplies().getFirst().getPostContent());
     }
 }

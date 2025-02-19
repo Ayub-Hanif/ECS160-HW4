@@ -13,8 +13,6 @@ import java.time.Instant;
 //for the list we need
 import java.util.ArrayList;
 import java.util.List;
-//we need it for the 128-bit unique ID
-import java.util.UUID;
 
 //for the Json file and its parsers file.
 import com.google.gson.JsonArray;
@@ -47,7 +45,7 @@ public class JsonParserFile {
             for (JsonElement object_file : get_array) {
                 if (object_file.getAsJsonObject().has("thread")) {
                     JsonObject thread_obj = object_file.getAsJsonObject().getAsJsonObject("thread");
-                    Post post = parse_post(thread_obj.getAsJsonObject("post"), null);
+                    Post post = parse_post(thread_obj.getAsJsonObject("post"));
 
                     if (thread_obj.has("replies")) {
                         parse_replies(thread_obj.getAsJsonArray("replies"), post);
@@ -63,17 +61,10 @@ public class JsonParserFile {
         return posts_file;
     }
 
-    private Post parse_post(JsonObject post_object, Integer parent_postId) {
+    private Post parse_post(JsonObject post_object) {
 
         String post_content = post_object.getAsJsonObject("record").get("text").getAsString();
-        int postId;
-        if (parent_postId == null) {
-            // we will be using the Universally Unique Identifier which uses 128-bit value.
-            postId = UUID.randomUUID().toString().hashCode();
-
-        } else {
-            postId = (post_content + parent_postId).hashCode();
-        }
+        // we will be using the Universally Unique Identifier which uses 128-bit value.
 
         String create_string = post_object.getAsJsonObject("record").get("createdAt").getAsString();
         Timestamp when_created = Timestamp.from(Instant.parse(create_string));
@@ -95,9 +86,9 @@ public class JsonParserFile {
         for (JsonElement Element_reply : replies_array) {
             JsonObject reply_obj = Element_reply.getAsJsonObject().getAsJsonObject("post");
 
-            Post reply = parse_post(reply_obj, parent_posts.get_post_Id());
+            Post reply = parse_post(reply_obj);
 
-            parent_posts.add_reply_under_post(reply);
+            parent_posts.addReplyUnderPost(reply);
 
             if (Element_reply.getAsJsonObject().has("replies")) {
                 parse_replies(Element_reply.getAsJsonObject().getAsJsonArray("replies"), reply);
