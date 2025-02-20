@@ -131,11 +131,11 @@ public class Session {
                     persistedIdList.setLength(persistedIdList.length() - 1);
                 }
                 jedis.hset(objStringId, field.getName(), persistedIdList.toString());
-            } else if (field.isAnnotationPresent(PersistableId.class)) {
-                // Persist the ID value as well
-                field.setAccessible(true);
-                jedis.hset(objStringId, field.getName(), field.get(targetObj).toString());
-            }
+            } /// else if (field.isAnnotationPresent(PersistableId.class)) {
+              // Persist the ID value as well
+              // field.setAccessible(true);
+              // jedis.hset(objStringId, field.getName(), field.get(targetObj).toString());
+              // }
         }
         persistedHashCodes.add(targetObj.hashCode());
     }
@@ -162,7 +162,7 @@ public class Session {
                 // System.out.println("accessing method " + thisMethod.getName());
                 String calledMethodName = thisMethod.getName();
                 if (!calledMethodName.startsWith("get")) { // this is not a getter method
-                    return thisMethod.invoke(object, args);
+                    return proceed.invoke(self, args);
                 }
                 // remove "get" prefix and lowercase first letter
                 String getterFieldName = calledMethodName.substring(3);
@@ -174,17 +174,18 @@ public class Session {
                     field = clazz.getDeclaredField(getterFieldName);
                     field.setAccessible(true);
                 } catch (NoSuchFieldException e) {
-                    return thisMethod.invoke(object, args);
+                    return proceed.invoke(self, args);
                 }
                 boolean isLazyGetter = field.isAnnotationPresent(LazyLoad.class);
                 if (isLazyGetter) { // check if the called method's name refers to a lazy
                     List<Object> loadedList = new ArrayList<>();
-                    for (Object item : (List<?>) field.get(object)) {
+                    for (Object item : (List<?>) field.get(self)) {
                         loadedList.add(load(item));
                     }
                     return loadedList;
                 }
-                return thisMethod.invoke(object, args);
+                // System.out.println("proceeding");
+                return proceed.invoke(self, args);
             }
         };
 
@@ -212,8 +213,17 @@ public class Session {
         Object ret = null;
         Class<?> clazz = object.getClass();
         boolean isLazyLoadPresent = false;
+        for (Field field : getAllFields(object)) {
+            if (field.isAnnotationPresent(LazyLoad.class)) {
+                isLazyLoadPresent = true;
+            }
+        }
         try {
-            ret = clazz.getDeclaredConstructor().newInstance();
+            if (isLazyLoadPresent) {
+                ret = createProxy(object);
+            } else {
+                ret = clazz.getDeclaredConstructor().newInstance();
+            }
         } catch (InstantiationException | IllegalAccessException
                 | InvocationTargetException | NoSuchMethodException e) {
             e.printStackTrace();
@@ -225,10 +235,10 @@ public class Session {
             if (field.isAnnotationPresent(PersistableId.class)) {
                 // Load the ID field from Redis.
                 field.setAccessible(true);
-                String storedValue = jedis.hget(objId, field.getName());
+                // String storedValue = jedis.hget(objId, field.getName());
                 try {
-                    if (field.getType() == Integer.class && storedValue != null && !storedValue.isEmpty()) {
-                        field.set(ret, Integer.parseInt(storedValue));
+                    if (field.getType() == Integer.class) {
+                        field.set(ret, Integer.parseInt(objId));
                     }
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
@@ -290,11 +300,7 @@ public class Session {
                 isLazyLoadPresent = true;
             }
         }
-        if (isLazyLoadPresent) {
-            return createProxy(ret);
-        } else {
-            return ret;
-        }
+        return ret;
     }
 
     // Closes the Jedis connection.
