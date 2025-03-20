@@ -1,4 +1,5 @@
-package com.ecs160.hw2;
+package com.ecs160.hw4;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,9 +34,11 @@ public class Post {
     public int get_word_count() {
         return word_count;
     }
+
     public List<Post> get_post_replies() {
         return post_replies;
     }
+
     public void add_reply_under_post(Post reply) {
         this.post_replies.add(reply);
     }

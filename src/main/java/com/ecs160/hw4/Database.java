@@ -1,13 +1,13 @@
-package com.ecs160.hw2;
-
-import redis.clients.jedis.Jedis;
+package com.ecs160.hw4;
 
 import java.sql.Timestamp;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import redis.clients.jedis.Jedis;
 
 public class Database {
     private Jedis jedis;
@@ -37,7 +37,6 @@ public class Database {
         jedis.flushAll();
     }
 
-
     public void insert_post(Post post, Integer parent_post_Id) {
         if (post_table_exists(post.get_post_Id())) {
             return;
@@ -64,7 +63,6 @@ public class Database {
         }
     }
 
-
     public List<Post> get_posts_db() {
         List<Post> post_list = new ArrayList<>();
         Set<String> topIds = jedis.smembers("topLevelPosts");
@@ -74,7 +72,8 @@ public class Database {
         for (String topIdStr : topIds) {
             int topId = Integer.parseInt(topIdStr);
             Post topPost = fetchPost(topId);
-            if (topPost == null) continue;
+            if (topPost == null)
+                continue;
 
             // fetch immediate children
             Set<String> childIds = jedis.smembers("post:" + topId + ":replies");
@@ -94,10 +93,12 @@ public class Database {
 
     private Post fetchPost(int postId) {
         String key = "post:" + postId;
-        if (!jedis.exists(key)) return null;
+        if (!jedis.exists(key))
+            return null;
 
-        Map<String,String> fields = jedis.hgetAll(key);
-        if (fields == null || fields.isEmpty()) return null;
+        Map<String, String> fields = jedis.hgetAll(key);
+        if (fields == null || fields.isEmpty())
+            return null;
 
         String content = fields.getOrDefault("post_content", "");
         String timeStr = fields.getOrDefault("creation_time", "0");

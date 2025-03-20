@@ -1,18 +1,16 @@
-package com.ecs160.hw1;
+package com.ecs160.hw4;
 
-import org.junit.jupiter.api.Test;
-
-import com.ecs160.hw2.Post;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.Timestamp;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class PostTest {
 
     @Test
     void test_post_initialization() {
-        //time for now is: "2024-12-10 06:26:59"
+        // time for now is: "2024-12-10 06:26:59"
         Timestamp timestamp = Timestamp.valueOf("2024-12-10 06:26:59");
         Post post = new Post(1, "Test post content", timestamp, 5);
 

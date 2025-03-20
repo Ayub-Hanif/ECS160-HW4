@@ -1,11 +1,11 @@
-package com.ecs160.hw2;
+package com.ecs160.hw4;
 
 import java.util.List;
 
 public class SocialAnalyzerDriver {
     public static void main(String[] args) {
 
-        // Single Configuration Object which is the (Singleton Pattern) used here to 
+        // Single Configuration Object which is the (Singleton Pattern) used here to
         // ensure only one instance of the configuration object exists.
         SingleConfig config = SingleConfig.getInstance();
         config.setWeighted(false);
@@ -39,7 +39,7 @@ public class SocialAnalyzerDriver {
             List<Post> posts_from_input = parser.json_parser(filePath);
 
             for (Post post : posts_from_input) {
-                data_base.insert_post(post, null); 
+                data_base.insert_post(post, null);
             }
         } catch (Exception exception) {
             exception.printStackTrace();

@@ -1,4 +1,4 @@
-package com.ecs160.hw1;
+package com.ecs160.hw4;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -6,9 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-
-import com.ecs160.hw2.JsonParserFile;
-import com.ecs160.hw2.Post;
 
 class JsonParserFileTest {
 

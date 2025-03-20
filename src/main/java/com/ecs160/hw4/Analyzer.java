@@ -1,4 +1,4 @@
-package com.ecs160.hw2;
+package com.ecs160.hw4;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -7,7 +7,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ArrayList;
 
 class SortByTimestamp implements Comparator<Post> {
     public int compare(Post o1, Post o2) {
@@ -25,9 +24,9 @@ public class Analyzer {
     private final List<Post> posts;
     private int longest_post_word_count;
 
-    public Analyzer(List<Post> posts)  {
+    public Analyzer(List<Post> posts) {
         this.posts = posts;
-        this.longest_post_word_count = -1; 
+        this.longest_post_word_count = -1;
     }
 
     public int count_total_posts() {
@@ -74,7 +73,7 @@ public class Analyzer {
             return 0;
         } else if (posts.size() == 1) {
             if (posts.getFirst().get_post_replies().isEmpty()) {
-               return 0;
+                return 0;
             }
         }
         int num_intervals = 0;

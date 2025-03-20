@@ -1,17 +1,5 @@
-package com.ecs160.hw2;
+package com.ecs160.hw4;
 
-//for the Json file and its parsers file.
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-//we need it for the 128-bit unique ID
-import java.util.UUID;
-
-//sql time based and instants
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,11 +7,20 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-
+//sql time based and instants
+import java.sql.Timestamp;
+import java.time.Instant;
 //for the list we need
 import java.util.ArrayList;
 import java.util.List;
+//we need it for the 128-bit unique ID
+import java.util.UUID;
 
+//for the Json file and its parsers file.
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class JsonParserFile {
     public List<Post> json_parser(String filePath) {
@@ -40,7 +37,6 @@ public class JsonParserFile {
                     System.err.println("File not found: " + filePath);
                 }
             }
-
 
             Reader file_reader = new InputStreamReader(input_file);
             JsonElement parse_element = JsonParser.parseReader(file_reader);
@@ -72,21 +68,23 @@ public class JsonParserFile {
         String post_content = post_object.getAsJsonObject("record").get("text").getAsString();
         int postId;
         if (parent_postId == null) {
-            //we will be using the Universally Unique Identifier which uses 128-bit value.
+            // we will be using the Universally Unique Identifier which uses 128-bit value.
             postId = UUID.randomUUID().toString().hashCode();
 
-        } else {postId = (post_content + parent_postId).hashCode();}
+        } else {
+            postId = (post_content + parent_postId).hashCode();
+        }
 
         String create_string = post_object.getAsJsonObject("record").get("createdAt").getAsString();
         Timestamp when_created = Timestamp.from(Instant.parse(create_string));
 
         /*
-            \\s+, is the best thing to use.
-            Matches any whitespace character, including:
-                Space    (  )
-                Tabs     (\t)
-                Newlines (\n)
-             We can count the number of words using this and then find the largest post.
+         * \\s+, is the best thing to use.
+         * Matches any whitespace character, including:
+         * Space ( )
+         * Tabs (\t)
+         * Newlines (\n)
+         * We can count the number of words using this and then find the largest post.
          */
         int word_count = post_content.split("\\s+").length;
 
