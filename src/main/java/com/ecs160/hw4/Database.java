@@ -58,8 +58,10 @@ public class Database {
             jedis.sadd("post:" + parent_post_Id + ":replies", String.valueOf(post.get_post_Id()));
         }
 
-        for (Post reply : post.get_post_replies()) {
-            insert_post(reply, post.get_post_Id());
+        for (SocialComposite reply : post.get_post_replies()) {
+            if (reply instanceof Post) {
+                insert_post((Post) reply, post.get_post_Id());
+            }
         }
     }
 

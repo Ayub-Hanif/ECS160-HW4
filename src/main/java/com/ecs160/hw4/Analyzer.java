@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class SortByTimestamp implements Comparator<Post> {
     public int compare(Post o1, Post o2) {
@@ -49,14 +50,16 @@ public class Analyzer {
             return (double) total_post_replies / this.count_total_posts();
         } else {
             if (this.longest_post_word_count == -1) {
-                // find largest by word count
                 this.longest_post_word_count = Collections.max(posts, new SortByWordCount()).get_word_count();
             }
             double total_post_weights = 0;
             for (Post p : posts) {
                 double current_post_weight = 0;
-                for (Post reply : p.get_post_replies()) {
-                    current_post_weight += 1 + ((((double) reply.get_word_count()) / this.longest_post_word_count));
+                for (SocialComposite replyComposite : p.get_post_replies()) {
+                    if (replyComposite instanceof Post) {
+                        Post reply = (Post) replyComposite;
+                        current_post_weight += 1 + ((((double) reply.get_word_count()) / this.longest_post_word_count));
+                    }
                 }
                 total_post_weights += current_post_weight;
             }
@@ -78,7 +81,10 @@ public class Analyzer {
         }
         int num_intervals = 0;
         for (Post p : posts) {
-            List<Post> replies_and_post = p.get_post_replies();
+            List<Post> replies_and_post = p.get_post_replies().stream()
+                .filter(reply -> reply instanceof Post)
+                .map(reply -> (Post) reply)
+                .collect(Collectors.toList());
             replies_and_post.addFirst(p);
             replies_and_post.sort(new SortByTimestamp());
             if (p.hashCode() != replies_and_post.getFirst().hashCode()) {
