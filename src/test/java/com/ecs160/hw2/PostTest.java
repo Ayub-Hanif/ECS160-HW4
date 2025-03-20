@@ -15,8 +15,8 @@ class PostTest {
         Post post = new Post("Test post content", timestamp, 5);
 
         // assertEquals(-1, post.getPostId());
-        assertEquals("Test post content", post.getPostContent());
-        assertEquals(5, post.getWordCount());
+        assertEquals("Test post content", post.get_post_content());
+        assertEquals(5, post.get_word_count());
     }
 
     @Test
@@ -25,9 +25,9 @@ class PostTest {
         Post post = new Post("Parent post", timestamp, 3);
 
         Post reply = new Post("Reply post", timestamp, 2);
-        post.addReplyUnderPost(reply);
+        post.add_reply_under_post(reply);
 
-        assertEquals(1, post.getReplies().size());
-        assertEquals("Reply post", post.getReplies().getFirst().getPostContent());
+        assertEquals(1, post.get_post_replies().size());
+        assertEquals("Reply post", post.get_post_replies().getFirst().get_post_content());
     }
 }

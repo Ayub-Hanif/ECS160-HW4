@@ -35,14 +35,13 @@ public class Main {
         System.out.println(loadedPost);
         // print the replies
         // ask the user if they want to load the replies. They can say "yes" by pressing
-        // any key.
         System.out.println("Do you want to load the replies? Press Enter to continue.");
         try {
             System.in.read();
         } catch (Exception e) {
         }
         System.out.println("---REPLIES---");
-        for (Post reply : loadedPost.getReplies()) {
+        for (Post reply : loadedPost.get_post_replies()) {
             // indent the replies to distinguish them from the post
             System.out.println(reply);
         }

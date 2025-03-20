@@ -21,7 +21,7 @@ class JsonParserFileTest {
 
         // checks the content of the post
         Post firstPost = posts.getFirst();
-        assertEquals("Which feeds includes posts marked with #atproto?", firstPost.getPostContent());
-        assertEquals(0, firstPost.getReplies().size());
+        assertEquals("Which feeds includes posts marked with #atproto?", firstPost.get_post_content());
+        assertEquals(0, firstPost.get_post_replies().size());
     }
 }
