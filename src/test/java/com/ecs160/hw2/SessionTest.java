@@ -41,7 +41,6 @@ public class SessionTest {
         try {
             s.persistAll();
         } catch (IllegalArgumentException | IllegalAccessException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -76,7 +75,6 @@ public class SessionTest {
         try {
             s.persistAll();
         } catch (IllegalArgumentException | IllegalAccessException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 

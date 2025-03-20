@@ -17,7 +17,7 @@ import javassist.util.proxy.ProxyFactory;
 import redis.clients.jedis.Jedis;
 
 public class Session {
-    private List<Object> objBuffer = new ArrayList<Object>();
+    private List<Object> objBuffer = new ArrayList<>();
     private static final int PORT_NUMBER = 6379;
     private Integer current_id = 1;
     private List<Integer> persistedHashCodes = new ArrayList<>();
@@ -31,7 +31,7 @@ public class Session {
     public void add(Object obj) {
         objBuffer.add(obj);
     }
-
+    
     private static String getObjectId(Object obj) {
         for (Field f : getAllFields(obj)) {
             if (f.isAnnotationPresent(PersistableId.class)) {
@@ -46,12 +46,6 @@ public class Session {
         throw new RuntimeException("No field annotated with @PersistableId found.");
     }
 
-    /*
-     * Gets the id string from a persisted object (i.e. an object that has been
-     * persisted with persistAll).
-     * IMPORTANT: assumes object id is already inside the @PersistableId-annotated
-     * field.
-     */
     private static String getPersistedObjIdString(Object partialObject) {
         String ret = "";
         for (Field field : getAllFields(partialObject)) {
@@ -59,7 +53,7 @@ public class Session {
                 field.setAccessible(true);
                 try {
                     ret = field.get(partialObject).toString();
-                    break; // found the id field
+                    break;
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -80,7 +74,6 @@ public class Session {
         return ret;
     }
 
-    // Only assign a new ID if the current value is -1 (or null)
     public void setObjId(Object obj) {
         Class<?> clazz = obj.getClass();
         for (Field field : clazz.getDeclaredFields()) {
@@ -99,6 +92,7 @@ public class Session {
         }
     }
 
+
     public void persistObject(Object targetObj) throws IllegalArgumentException, IllegalAccessException {
         if (persistedHashCodes.contains(targetObj.hashCode())) {
             return;
@@ -107,38 +101,42 @@ public class Session {
         if (!clazz.isAnnotationPresent(Persistable.class)) {
             return;
         }
+
         setObjId(targetObj);
 
         String objStringId = getObjectId(targetObj);
 
-        // Persist fields annotated with @PersistableField
+        if (jedis.exists(objStringId)) {
+            return;
+        }
+
         for (Field field : getAllFields(targetObj)) {
+            field.setAccessible(true);
+
             if (field.isAnnotationPresent(PersistableField.class)) {
-                field.setAccessible(true);
                 Object value = field.get(targetObj);
                 String valueStr = (value != null) ? value.toString() : "";
                 jedis.hset(objStringId, field.getName(), valueStr);
+
             } else if (field.isAnnotationPresent(PersistableListField.class)) {
-                field.setAccessible(true);
-                StringBuilder persistedIdList = new StringBuilder(); // comma separated list of IDs
                 List<?> itemList = (List<?>) field.get(targetObj);
+                StringBuilder persistedIdList = new StringBuilder();
+
                 if (itemList != null && !itemList.isEmpty()) {
                     for (Object item : itemList) {
-                        persistObject(item);
+                        persistObject(item); // recursively persist child items
                         persistedIdList.append(getObjectId(item)).append(",");
                     }
                     // Remove trailing comma
                     persistedIdList.setLength(persistedIdList.length() - 1);
                 }
                 jedis.hset(objStringId, field.getName(), persistedIdList.toString());
-            } /// else if (field.isAnnotationPresent(PersistableId.class)) {
-              // Persist the ID value as well
-              // field.setAccessible(true);
-              // jedis.hset(objStringId, field.getName(), field.get(targetObj).toString());
-              // }
+            }
         }
+
         persistedHashCodes.add(targetObj.hashCode());
     }
+
 
     public void persistAll() throws IllegalArgumentException, IllegalAccessException {
         for (Object obj : objBuffer) {
@@ -155,69 +153,65 @@ public class Session {
 
         MethodHandler methodHandler = new MethodHandler() {
             @Override
-            public Object invoke(Object self,
-                    Method thisMethod,
-                    Method proceed,
-                    Object[] args) throws Throwable {
-                // System.out.println("accessing method " + thisMethod.getName());
+            public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
                 String calledMethodName = thisMethod.getName();
-                if (!calledMethodName.startsWith("get")) { // this is not a getter method
+                if (!calledMethodName.startsWith("get")) {
                     return proceed.invoke(self, args);
                 }
-                // remove "get" prefix and lowercase first letter
                 String getterFieldName = calledMethodName.substring(3);
-                getterFieldName = Character.toLowerCase(getterFieldName.charAt(0)) +
-                        getterFieldName.substring(1);
-                // Class<?> clazz = self.getClass();
-                Field field = null;
+                getterFieldName = Character.toLowerCase(getterFieldName.charAt(0)) + getterFieldName.substring(1);
+
+                Field field;
                 try {
                     field = clazz.getDeclaredField(getterFieldName);
                     field.setAccessible(true);
                 } catch (NoSuchFieldException e) {
                     return proceed.invoke(self, args);
                 }
+
                 boolean isLazyGetter = field.isAnnotationPresent(LazyLoad.class);
-                if (isLazyGetter) { // check if the called method's name refers to a lazy
+                if (isLazyGetter) {
+                    // for each item in the list, load it
                     List<Object> loadedList = new ArrayList<>();
                     for (Object item : (List<?>) field.get(self)) {
                         loadedList.add(load(item));
                     }
                     return loadedList;
                 }
-                // System.out.println("proceeding");
                 return proceed.invoke(self, args);
             }
         };
 
         Class<?> proxyClass = proxyFactory.createClass();
-        Object proxyObject;
         try {
-            proxyObject = proxyClass.getDeclaredConstructor().newInstance();
+            Object proxyObject = proxyClass.getDeclaredConstructor().newInstance();
             ((javassist.util.proxy.Proxy) proxyObject).setHandler(methodHandler);
             return proxyObject;
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException | SecurityException e) {
-            // TODO Auto-generated catch block
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException | NoSuchMethodException | SecurityException e) {
             e.printStackTrace();
             return null;
         }
     }
 
+
     public Object load(Object object) {
-        // Load an object from Redis based on its ID field.
         String objId = getPersistedObjIdString(object);
         if (objId == null || objId.isEmpty()) {
             System.err.println("Invalid object id for loading.");
             return null;
         }
-        Object ret = null;
+
         Class<?> clazz = object.getClass();
         boolean isLazyLoadPresent = false;
         for (Field field : getAllFields(object)) {
             if (field.isAnnotationPresent(LazyLoad.class)) {
                 isLazyLoadPresent = true;
+                break;
             }
         }
+
+        Object ret;
         try {
             if (isLazyLoadPresent) {
                 ret = createProxy(object);
@@ -230,12 +224,10 @@ public class Session {
             return null;
         }
 
-        // Load fields
         for (Field field : getAllFields(ret)) {
+            field.setAccessible(true);
+
             if (field.isAnnotationPresent(PersistableId.class)) {
-                // Load the ID field from Redis.
-                field.setAccessible(true);
-                // String storedValue = jedis.hget(objId, field.getName());
                 try {
                     if (field.getType() == Integer.class) {
                         field.set(ret, Integer.parseInt(objId));
@@ -243,8 +235,8 @@ public class Session {
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
                 }
+
             } else if (field.isAnnotationPresent(PersistableField.class)) {
-                field.setAccessible(true);
                 String storedValue = jedis.hget(objId, field.getName());
                 try {
                     if (field.getType() == String.class) {
@@ -253,25 +245,24 @@ public class Session {
                         field.set(ret, (storedValue != null && !storedValue.isEmpty())
                                 ? Integer.parseInt(storedValue)
                                 : null);
-                    }
+                    } 
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
                 }
+
             } else if (field.isAnnotationPresent(PersistableListField.class)) {
-                field.setAccessible(true);
-                // If field is annotated with @LazyLoad, create a dynamic proxy.
-                // Otherwise, load the list immediately.
                 String storedIds = jedis.hget(objId, field.getName());
                 List<Object> loadedList = new ArrayList<>();
                 if (storedIds != null && !storedIds.isEmpty()) {
                     String[] ids = storedIds.split(",");
                     for (String idStr : ids) {
-                        if (idStr.trim().isEmpty())
-                            continue;
+                        if (idStr.trim().isEmpty()) continue;
                         try {
                             Class<?> listElementClass = Class.forName(
                                     field.getAnnotation(PersistableListField.class).className());
                             Object listElement = listElementClass.getDeclaredConstructor().newInstance();
+
+                            // set the ID of the child
                             for (Field f : getAllFields(listElement)) {
                                 if (f.isAnnotationPresent(PersistableId.class)) {
                                     f.setAccessible(true);
@@ -279,31 +270,26 @@ public class Session {
                                     break;
                                 }
                             }
-                            // If the list element is not annotated with @LazyLoad, load it now.
+                            // If field not lazy, load child right now
                             if (!field.isAnnotationPresent(LazyLoad.class)) {
                                 listElement = load(listElement);
                             }
                             loadedList.add(listElement);
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
-
-                    try {
-                        field.set(ret, loadedList);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
                 }
-            }
-            if (field.isAnnotationPresent(LazyLoad.class)) {
-                isLazyLoadPresent = true;
+                try {
+                    field.set(ret, loadedList);
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return ret;
     }
-
-    // Closes the Jedis connection.
     public void close() {
         if (jedis != null) {
             jedis.close();
