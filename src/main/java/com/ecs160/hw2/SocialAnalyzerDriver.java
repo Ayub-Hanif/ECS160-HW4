@@ -4,27 +4,30 @@ import java.util.List;
 
 public class SocialAnalyzerDriver {
     public static void main(String[] args) {
-        boolean weighted = false;
-        String filePath = "input.json";
 
+        // Single Configuration Object which is the (Singleton Pattern) used here to 
+        // ensure only one instance of the configuration object exists.
+        SingleConfig config = SingleConfig.getInstance();
+        config.setWeighted(false);
+        config.setJsonFilePath("input.json");
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("--weighted") && i + 1 < args.length && args[i + 1].equals("true")) {
-                weighted = true;
+                config.setWeighted(true);
             }
             if (args[i].equals("--file") && i + 1 < args.length) {
-                filePath = args[i + 1];
+                config.setJsonFilePath(args[i + 1]);
             }
         }
 
         Database data_base = new Database();
 
-        init_db(data_base, filePath);
+        init_db(data_base, config.getJsonFilePath());
 
         List<Post> post_list = data_base.get_posts_db();
 
         Analyzer analyzer = new Analyzer(post_list);
         System.out.println("Total posts: " + analyzer.count_total_posts());
-        System.out.println("Average number of replies: " + analyzer.calc_avg_replies(weighted));
+        System.out.println("Average number of replies: " + analyzer.calc_avg_replies(config.isWeighted()));
         System.out.println("Average duration between replies: " + analyzer.get_format_duration());
     }
 
