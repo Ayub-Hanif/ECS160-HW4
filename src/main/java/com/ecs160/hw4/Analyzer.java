@@ -1,22 +1,19 @@
 package com.ecs160.hw4;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
-class SortByTimestamp implements Comparator<Post> {
-    public int compare(Post o1, Post o2) {
+class SortByTimestamp implements Comparator<SocialComposite> {
+    public int compare(SocialComposite o1, SocialComposite o2) {
         return o1.get_creation_time().compareTo(o2.get_creation_time());
     }
 }
 
-class SortByWordCount implements Comparator<Post> {
-    public int compare(Post o1, Post o2) {
+class SortByWordCount implements Comparator<SocialComposite> {
+    public int compare(SocialComposite o1, SocialComposite o2) {
         return o1.get_word_count() - o2.get_word_count();
     }
 }
@@ -68,37 +65,31 @@ public class Analyzer {
     }
 
     public double calc_avg_duration() {
-        if (this.count_total_posts() == 0) {
-            return 0;
-        }
-        long total_duration = 0;
-        if (posts.isEmpty()) {
-            return 0;
-        } else if (posts.size() == 1) {
-            if (posts.getFirst().get_post_replies().isEmpty()) {
-                return 0;
-            }
-        }
-        int num_intervals = 0;
-        for (Post p : posts) {
-            List<Post> replies_and_post = p.get_post_replies().stream()
-                .filter(reply -> reply instanceof Post)
-                .map(reply -> (Post) reply)
-                .collect(Collectors.toList());
+        // if (this.count_total_posts() == 0) {
+        // return 0;
+        // }
+        // long total_duration = 0;
+        // if (posts.isEmpty()) {
+        // return 0;
+        // } else if (posts.size() == 1) {
+        // if (posts.getFirst().get_post_replies().isEmpty()) {
+        // return 0;
+        // }
+        // }
+
+        AverageDurationVisitor avg_duration_visitor = new AverageDurationVisitor();
+        for (SocialComposite p : posts) {
+            List<SocialComposite> replies_and_post = p.get_post_replies();
             replies_and_post.addFirst(p);
             replies_and_post.sort(new SortByTimestamp());
-            if (p.hashCode() != replies_and_post.getFirst().hashCode()) {
-                continue;
-            }
+
             for (int i = 0; i < replies_and_post.size() - 1; i++) {
-                Instant currentInstant = replies_and_post.get(i + 1).get_creation_time().toInstant();
-                Instant previousInstant = replies_and_post.get(i).get_creation_time().toInstant();
-                total_duration += ChronoUnit.SECONDS.between(previousInstant, currentInstant);
-                num_intervals += 1;
+                avg_duration_visitor.visit(replies_and_post.get(i), replies_and_post.get(i + 1));
             }
+
             replies_and_post.removeFirst();
         }
-        return (double) total_duration / num_intervals;
+        return avg_duration_visitor.getAverageDuration();
     }
 
     // Return a human-readable string of HH:MM:SS
