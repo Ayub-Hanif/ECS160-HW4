@@ -3,6 +3,7 @@ package com.ecs160.hw4;
 public class CountingVisitor implements SocialVisitor {
     private int total_post_count = 0;
 
+    @Override
     public void visit(Post post) {
         total_post_count++;
     }

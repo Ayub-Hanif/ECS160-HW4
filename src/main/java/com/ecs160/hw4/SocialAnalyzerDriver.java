@@ -1,15 +1,15 @@
 package com.ecs160.hw4;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SocialAnalyzerDriver {
     public static void main(String[] args) {
 
-        // Single Configuration Object which is the (Singleton Pattern) used here to
-        // ensure only one instance of the configuration object exists.
         SingleConfig config = SingleConfig.getInstance();
         config.setWeighted(false);
         config.setJsonFilePath("input.json");
+
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("--weighted") && i + 1 < args.length && args[i + 1].equals("true")) {
                 config.setWeighted(true);
@@ -20,20 +20,27 @@ public class SocialAnalyzerDriver {
         }
 
         Database data_base = new Database();
-
         init_db(data_base, config.getJsonFilePath());
 
-        List<Post> post_list = data_base.get_posts_db();
+        List<Post> post_list = data_base.get_posts_db(); 
+        List<SocialComposite> topLevelComponents = new ArrayList<>(post_list);
 
-        Analyzer analyzer = new Analyzer(post_list);
-        System.out.println("Total posts: " + analyzer.count_total_posts());
-        System.out.println("Average number of replies: " + analyzer.calc_avg_replies(config.isWeighted()));
-        System.out.println("Average duration between replies: " + analyzer.get_format_duration());
+        CountingVisitor countingVisitor = new CountingVisitor();
+        for (SocialComposite c : topLevelComponents) {
+            countingVisitor.visit((Post) c);
+        }
+        System.out.println("Total posts: " + countingVisitor.getCount());
+
+        ReplyVisitor replyVisitor = new ReplyVisitor(config.isWeighted());
+        for (SocialComposite c : topLevelComponents) {
+            replyVisitor.visit((Post) c);
+        }
+        System.out.println("Average number of replies: " + replyVisitor.getAverageReplies());
+
     }
 
     private static void init_db(Database data_base, String filePath) {
         data_base.free_table();
-
         try {
             JsonParserFile parser = new JsonParserFile();
             List<Post> posts_from_input = parser.json_parser(filePath);

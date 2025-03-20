@@ -57,8 +57,8 @@ public class Post implements SocialComposite {
     @Override
     public void accept(SocialVisitor visitor) {
         visitor.visit(this);
-        for (SocialComposite c : post_replies) {
-            c.accept(visitor);
+        for (SocialComposite reply : post_replies) {
+            reply.accept(visitor);
         }
     }
 }
