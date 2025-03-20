@@ -1,5 +1,4 @@
-This repository is located here: https://github.com/wertyyyy12/160-hw2-persistence-framework.
-# ECS160 HW2
+# ECS160 HW4
 
 ## Getting Started
 1. Clone this repo.
