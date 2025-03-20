@@ -77,7 +77,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.ecs160.hw2.Main</mainClass> <!-- Replace
+                            <mainClass>com.ecs160.hw2.SocialAnalyzerDriver</mainClass> <!-- Replace
                             with your actual main class -->
                         </manifest>
                     </archive>

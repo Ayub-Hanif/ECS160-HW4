@@ -10,19 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Redis-based replacement for the old PostgreSQL Database class.
+ * Redis-based Database class without any username/password fields.
  */
 public class Database {
-    private final String sql_name;      // these fields are now just placeholders
-    private final String sql_user;      // since we no longer need them for Redis
-    private final String sql_password;
-    
     private Jedis jedis;   // our Redis client
 
-    public Database(String sql_name, String sql_user, String sql_password) {
-        this.sql_name = sql_name;
-        this.sql_user = sql_user;
-        this.sql_password = sql_password;
+    public Database() {
         connection();
         create_db_table();
     }
@@ -40,37 +33,17 @@ public class Database {
 
     // No actual table creation needed for Redis, so either do nothing or log it.
     public void create_db_table() {
-        // no-op for Redis
-        // System.out.println("No table creation needed in Redis.");
     }
 
-    public String get_db_name() {
-        return sql_name;
-    }
-
-    public String get_db_user() {
-        return sql_user;
-    }
-
-    public String get_db_password() {
-        return sql_password;
-    }
-
-    // Check if a post with this ID already exists in Redis
     private boolean post_table_exists(int input_post_Id) {
-        // We will store each post in a Redis hash named "post:<ID>"
         return jedis.exists("post:" + input_post_Id);
     }
 
-    // Clear out all Redis data for a clean start (like "DELETE FROM posts;")
     public void free_table() {
         jedis.flushAll();
     }
 
-    /**
-     * Insert a post into Redis, along with its immediate replies.
-     * Because we are ignoring "replies-of-replies," we only store one level deep.
-     */
+
     public void insert_post(Post post, Integer parent_post_Id) {
         // If the post already exists, skip
         if (post_table_exists(post.get_post_Id())) {
@@ -81,14 +54,16 @@ public class Database {
         String key = "post:" + post.get_post_Id();
         Map<String, String> fields = new HashMap<>();
         fields.put("post_content", post.get_post_content());
+
         // store creation time as a string (millis) to parse later
         fields.put("creation_time", String.valueOf(post.get_creation_time().getTime()));
         fields.put("word_count", String.valueOf(post.get_word_count()));
-        // If parent is null, we store "NULL" or something
+
+        // If parent is null, store "NULL" or something
         fields.put("parent_post_id", parent_post_Id == null ? "NULL" : String.valueOf(parent_post_Id));
         jedis.hset(key, fields);
 
-        // If parent is null, then this is top-level. We'll add its ID to a set of top-level posts
+        // If parent is null, this is top-level. Add its ID to "topLevelPosts"
         if (parent_post_Id == null) {
             jedis.sadd("topLevelPosts", String.valueOf(post.get_post_Id()));
         } else {
@@ -96,21 +71,15 @@ public class Database {
             jedis.sadd("post:" + parent_post_Id + ":replies", String.valueOf(post.get_post_Id()));
         }
 
-        // In the old version, we recursively inserted each reply's replies. Now ignoring 
-        // deeper replies-of-replies, so only store the immediate children:
+        // Only store immediate replies (one level)
         for (Post reply : post.get_post_replies()) {
-            // Insert each immediate reply (but do not recurse further).
-            // That means reply-of-reply is not stored.
             insert_post(reply, post.get_post_Id());
         }
     }
 
-    /**
-     * Retrieve top-level posts + their immediate replies from Redis.
-     */
+
     public List<Post> get_posts_db() {
         List<Post> post_list = new ArrayList<>();
-        // get all the top-level IDs
         Set<String> topIds = jedis.smembers("topLevelPosts");
         if (topIds == null) {
             return post_list;
@@ -120,7 +89,7 @@ public class Database {
             Post topPost = fetchPost(topId);
             if (topPost == null) continue;
 
-            // Now fetch immediate children
+            // fetch immediate children
             Set<String> childIds = jedis.smembers("post:" + topId + ":replies");
             if (childIds != null) {
                 for (String childIdStr : childIds) {
@@ -136,9 +105,6 @@ public class Database {
         return post_list;
     }
 
-    /**
-     * Helper to fetch a single Post from Redis by ID (ignoring any deeper replies).
-     */
     private Post fetchPost(int postId) {
         String key = "post:" + postId;
         if (!jedis.exists(key)) return null;
@@ -155,7 +121,6 @@ public class Database {
 
         int wc = Integer.parseInt(wordCountStr);
 
-        // Build a Post object. 
         return new Post(postId, content, creationTime, wc);
     }
 

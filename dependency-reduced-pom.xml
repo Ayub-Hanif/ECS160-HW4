@@ -25,7 +25,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.ecs160.hw2.Main</mainClass>
+              <mainClass>com.ecs160.hw2.SocialAnalyzerDriver</mainClass>
             </manifest>
           </archive>
         </configuration>
