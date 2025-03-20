@@ -53,4 +53,12 @@ public class Post implements SocialComposite {
     public void add_reply_under_post(SocialComposite reply) {
         this.post_replies.add(reply);
     }
+
+    @Override
+    public void accept(SocialVisitor visitor) {
+        visitor.visit(this);
+        for (SocialComposite c : post_replies) {
+            c.accept(visitor);
+        }
+    }
 }

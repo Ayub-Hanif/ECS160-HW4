@@ -15,5 +15,5 @@ public interface SocialComposite {
     void add_reply_under_post(SocialComposite reply);
 
     // For the Visitor pattern:
-    // void accept(SocialVisitor visitor);
+     void accept(SocialVisitor visitor);
 }
