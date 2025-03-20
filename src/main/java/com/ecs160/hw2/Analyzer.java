@@ -65,44 +65,34 @@ public class Analyzer {
         }
     }
 
-    /**
-     * Calculates the average time difference between consecutive “comments” 
-     * (the post and its replies) in seconds. 
-     */
     public double calc_avg_duration() {
         if (this.count_total_posts() == 0) {
             return 0;
         }
-
         long total_duration = 0;
-        int num_intervals = 0;
-        for (Post p : posts) {
-            // immediate replies, plus parent as first
-            // ignoring deeper reply-of-reply
-            List<Post> allComments = p.get_post_replies();
-            // in old code we addFirst(p), but let's do it with a local list:
-            // must put p in the front
-            // You can just do something simpler, or replicate your old logic:
-
-            // Build a mini-list [p, r1, r2, ...] sorted by timestamp
-            // If there's only the parent, there are no intervals.
-            // If 1 parent + 2 replies => 2 intervals to measure.
-            // etc.
-            List<Post> miniList = new ArrayList<>(allComments);
-            miniList.add(p);
-            miniList.sort(new SortByTimestamp());
-            if (!miniList.isEmpty() && miniList.get(0).hashCode() != p.hashCode()) {
-                // the parent isn't the earliest, skip 
-                continue;
-            }
-            for (int i = 0; i < miniList.size() - 1; i++) {
-                Instant current = miniList.get(i + 1).get_creation_time().toInstant();
-                Instant prev    = miniList.get(i).get_creation_time().toInstant();
-                total_duration += ChronoUnit.SECONDS.between(prev, current);
-                num_intervals++;
+        if (posts.isEmpty()) {
+            return 0;
+        } else if (posts.size() == 1) {
+            if (posts.getFirst().get_post_replies().isEmpty()) {
+               return 0;
             }
         }
-        if (num_intervals == 0) return 0;
+        int num_intervals = 0;
+        for (Post p : posts) {
+            List<Post> replies_and_post = p.get_post_replies();
+            replies_and_post.addFirst(p);
+            replies_and_post.sort(new SortByTimestamp());
+            if (p.hashCode() != replies_and_post.getFirst().hashCode()) {
+                continue;
+            }
+            for (int i = 0; i < replies_and_post.size() - 1; i++) {
+                Instant currentInstant = replies_and_post.get(i + 1).get_creation_time().toInstant();
+                Instant previousInstant = replies_and_post.get(i).get_creation_time().toInstant();
+                total_duration += ChronoUnit.SECONDS.between(previousInstant, currentInstant);
+                num_intervals += 1;
+            }
+            replies_and_post.removeFirst();
+        }
         return (double) total_duration / num_intervals;
     }
 
