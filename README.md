@@ -1,5 +1,4 @@
-This repository is located here: https://github.com/wertyyyy12/160-hw2-persistence-framework.
-# ECS160 HW2
+# ECS160 HW4
 
 ## Getting Started
 1. Clone this repo.
@@ -7,5 +6,5 @@ This repository is located here: https://github.com/wertyyyy12/160-hw2-persisten
 3. Run `mvn clean install` in IntelliJ or terminal.
 4. Run the app with:
    ```bash
-   java -jar target/HW2-solution-1.0-SNAPSHOT.jar
+   java -jar target/HW1-solution-1.0-SNAPSHOT.jar
    ```
