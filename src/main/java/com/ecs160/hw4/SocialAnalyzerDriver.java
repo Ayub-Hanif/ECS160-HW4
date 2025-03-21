@@ -35,9 +35,10 @@ public class SocialAnalyzerDriver {
         for (Post post : topPosts) {
             HashtagDecorator hashtagDecorator = new HashtagDecorator(post);
             hashtagDecorator.setHashtag();
-            System.out.println("Post ID: " + post.get_post_Id() + " Hashtag: " + hashtagDecorator.getHashtag());
-        }
+            //System.out.println("Post ID: " + post.get_post_Id() + " Hashtag: " + hashtagDecorator.getHashtag());
 
+            System.out.println(hashtagDecorator.get_post_content() + " " + hashtagDecorator.getHashtag());
+        }
     }
 
     private static void init_db(Database data_base, String filePath) {
