@@ -23,8 +23,6 @@ public class SocialAnalyzerDriver {
         init_db(data_base, config.getJsonFilePath());
 
         List<Post> post_list = data_base.get_posts_db();
-        List<SocialComposite> topLevelComponents = new ArrayList<>(post_list);
-
         Analyzer analyzer = new Analyzer(post_list);
         System.out.println("Total posts: " + analyzer.count_total_posts());
         System.out.println("Average number of replies: " + analyzer.calc_avg_replies(config.isWeighted()));

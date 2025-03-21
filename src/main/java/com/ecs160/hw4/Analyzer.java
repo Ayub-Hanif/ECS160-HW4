@@ -47,17 +47,6 @@ public class Analyzer {
     }
 
     public double calc_avg_duration() {
-        // if (this.count_total_posts() == 0) {
-        // return 0;
-        // }
-        // long total_duration = 0;
-        // if (posts.isEmpty()) {
-        // return 0;
-        // } else if (posts.size() == 1) {
-        // if (posts.getFirst().get_post_replies().isEmpty()) {
-        // return 0;
-        // }
-        // }
 
         AverageDurationVisitor avg_duration_visitor = new AverageDurationVisitor();
         for (SocialComposite p : posts) {
