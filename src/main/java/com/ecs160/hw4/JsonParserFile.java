@@ -22,6 +22,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+/*
+ * This class is used to parse the JSON file and return a list of Post objects.
+ */
+
 public class JsonParserFile {
     public List<Post> json_parser(String filePath) {
         List<Post> posts_file = new ArrayList<>();

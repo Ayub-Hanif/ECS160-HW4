@@ -6,6 +6,14 @@ package com.ecs160.hw4;
  * Weighted: sums replies based on word counts relative to the longest post encountered so far.
  */
 
+/**
+ * This class implements the SocialVisitor interface and is used to visit
+ * posts and calculate the average number of replies for each post.
+ * 
+ * The visitor takes in a boolean weighted which determines if the average
+ * is weighted by the word count of the replies.
+ */
+
 public class ReplyVisitor implements SocialVisitor {
     private int totalTopLevelPosts = 0;
     private int totalImmediateReplies = 0;
