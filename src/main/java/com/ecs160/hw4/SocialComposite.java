@@ -4,11 +4,13 @@ import java.sql.Timestamp;
 import java.util.List;
 
 /**
- * We using the Composite pattern. it lets us treat “leaf” nodes as (single
- * posts) and “composite” nodes as (threads with replies) via one interface.
- * We already had a Post that contain a list of replies (which themselves are
- * Posts). Which is halfway to Composite!
- * Each Post is both: A “Leaf” if it has no replies. A “Composite” if it has one
+ * Also mentioned in the POST.java on top of it same thing because this is used there aswell.
+ * 
+ * We using the Composite pattern. it lets us treat leaf nodes as single
+ * posts and composite nodes as threads with replies via one interface.
+ * We already had a Post that contain a list of replies which themselves are
+ * Posts. Which is halfway to Composite!
+ * Each Post is both: A Leaf if it has no replies. A Composite if it has one
  * or more replies.
  */
 public interface SocialComposite {

@@ -1,4 +1,10 @@
 package com.ecs160.hw4;
+/**
+ * A Visitor that calculates the average number of immediate replies for each
+ * top-level post. It can operate in two modes:
+ * Non-weighted: simply counts how many direct replies exist for each post.
+ * Weighted: sums replies based on word counts relative to the longest post encountered so far.
+ */
 
 public class ReplyVisitor implements SocialVisitor {
     private int totalTopLevelPosts = 0;
