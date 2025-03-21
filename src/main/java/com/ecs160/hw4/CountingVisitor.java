@@ -1,5 +1,10 @@
 package com.ecs160.hw4;
 
+/**
+ * A simple Visitor implementation that counts the total number of posts visited.
+ * Each time visit(Post post) is invoked the post count is incremented.
+ */
+
 public class CountingVisitor implements SocialVisitor {
     private int total_post_count = 0;
 

@@ -5,6 +5,15 @@ import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * This class for performing various social-media analytics
+ * (post counts, average replies, and average reply duration) on a list
+ * of Post objects. It applies different Visitors (CountingVisitor,
+ * ReplyVisitor, AverageDurationVisitor) to traverse the Composite structure of
+ * posts. Each Visitor focuses on a particular statistic keeping the logic
+ * separate from the Post class itself.
+ */
+
 class SortByTimestamp implements Comparator<SocialComposite> {
     public int compare(SocialComposite o1, SocialComposite o2) {
         return o1.get_creation_time().compareTo(o2.get_creation_time());
@@ -34,10 +43,6 @@ public class Analyzer {
         return countingVisitor.getCount();
     }
 
-    /**
-     * Calculates the average number of replies. Weighted or unweighted.
-     * Because we ignore deeper replies-of-replies, this is just immediate children.
-     */
     public double calc_avg_replies(boolean weighted) {
         ReplyVisitor replyVisitor = new ReplyVisitor(weighted);
         for (SocialComposite c : posts) {

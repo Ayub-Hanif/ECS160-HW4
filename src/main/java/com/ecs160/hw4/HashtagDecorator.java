@@ -4,6 +4,15 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The Decorator pattern is used here to add hashtags to posts and their replies
+ * without modifying or subclassing the original Post class. This class wraps
+ * an existing SocialComposite the original_post and provides a hashtag field
+ * along with its own list of decorated replies. By overriding methods like
+ * get_post_replies() we ensure that any child posts are also decorated
+ * allowing each post and reply to have its own hashtag if desired.
+ */
+
 public class HashtagDecorator implements SocialComposite {
     private final SocialComposite original_post; // The original Post/Thread
     private String hashtag;
@@ -33,7 +42,6 @@ public class HashtagDecorator implements SocialComposite {
         tagged_replies.add(new HashtagDecorator(child));
     }
 
-    // Pass-through methods
     @Override
     public int get_post_Id() {
         return original_post.get_post_Id();
@@ -56,7 +64,6 @@ public class HashtagDecorator implements SocialComposite {
 
     @Override
     public void accept(SocialVisitor visitor) {
-        // Just forward to the original
         original_post.accept(visitor);
     }
 
@@ -72,7 +79,6 @@ public class HashtagDecorator implements SocialComposite {
         }
     }
 
-    // Convenience methods for replies
     public void setReplyHashtag(int idx) {
         HashtagDecorator child = (HashtagDecorator) tagged_replies.get(idx);
         child.setHashtag();

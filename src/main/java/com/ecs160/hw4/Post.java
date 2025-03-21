@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * We using the Composite pattern. it lets us treat “leaf” nodes as (single
- * posts) and “composite” nodes as (threads with replies) via one interface.
- * We already had a Post that contain a list of replies (which themselves are
- * Posts). Which is halfway to Composite!
- * Each Post is both: A “Leaf” if it has no replies. A “Composite” if it has one
+ * We using the Composite pattern. it lets us treat leaf nodes as single
+ * posts and composite nodes as threads with replies via one interface.
+ * We already had a Post that contain a list of replies which themselves are
+ * Posts. Which was halfway to Composite!
+ * Each Post is both a Leaf if it has no replies. A Composite if it has one
  * or more replies.
  */
 

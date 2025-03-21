@@ -3,6 +3,14 @@ package com.ecs160.hw4;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * A Visitor class that calculates the average duration in seconds
+ * between pairs of consecutive posts. visit(Post post) method,
+ * this visitor is designed to handle two posts at a time—such as a parent post
+ * and its immediate reply by computing the time difference between them.
+ */
+
+
 public class AverageDurationVisitor {
     private int total_duration = 0;
     private int total_posts = 0;

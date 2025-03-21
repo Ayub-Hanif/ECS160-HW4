@@ -78,7 +78,6 @@ public class Database {
             if (topPost == null)
                 continue;
 
-            // fetch immediate children
             Set<String> childIds = jedis.smembers("post:" + topId + ":replies");
             if (childIds != null) {
                 for (String childIdStr : childIds) {
