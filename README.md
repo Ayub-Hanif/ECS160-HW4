@@ -1,4 +1,6 @@
 # ECS160 HW4
+## Report 
+Our report is in the ECS160_HW4_Report.pdf file. 
 
 ## Getting Started
 1. Clone this repo.
