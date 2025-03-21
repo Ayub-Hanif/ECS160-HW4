@@ -9,6 +9,11 @@ public class HashtagDecorator implements SocialComposite {
 
     public HashtagDecorator(SocialComposite original_post) {
         this.original_post = original_post;
+        for (SocialComposite reply : original_post.get_post_replies()) {
+            if (!(reply instanceof HashtagDecorator)) {
+                reply = new HashtagDecorator(reply);
+            }
+        }
     }
 
     // We wrapped original_post object:
@@ -58,5 +63,13 @@ public class HashtagDecorator implements SocialComposite {
             LlamaInstance llamaInstance = new LlamaInstance();
             this.hashtag = llamaInstance.generateHashtag(this.get_post_content());
         }
+    }
+
+    public void setReplyHashtag(int idx) {
+        ((HashtagDecorator) this.original_post.get_post_replies().get(idx)).setHashtag();
+    }
+
+    public String getReplyHashtag(int idx) {
+        return ((HashtagDecorator) this.original_post.get_post_replies().get(idx)).getHashtag();
     }
 }
