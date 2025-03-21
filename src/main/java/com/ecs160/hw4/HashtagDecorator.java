@@ -7,18 +7,33 @@ import java.util.List;
 public class HashtagDecorator implements SocialComposite {
     private final SocialComposite original_post; // The original Post/Thread
     private String hashtag;
-    private List<HashtagDecorator> replies = new ArrayList<HashtagDecorator>();
+    private final List<SocialComposite> tagged_replies = new ArrayList<>();
 
 
     public HashtagDecorator(SocialComposite original_post) {
         this.original_post = original_post;
-        for (int i = 0; i < original_post.get_post_replies().size(); i++) {
-            replies.add(new HashtagDecorator(original_post.get_post_replies().get(i)));
+        for (SocialComposite child : original_post.get_post_replies()) {
+            if (!(child instanceof HashtagDecorator)) {
+                tagged_replies.add(new HashtagDecorator(child));
+            } else {
+                tagged_replies.add(child);
+            }
         }
     }
 
     // We wrapped original_post object:
 
+    @Override
+    public List<SocialComposite> get_post_replies() {
+        return tagged_replies;
+    }
+
+    @Override
+    public void add_reply_under_post(SocialComposite child) {
+        tagged_replies.add(new HashtagDecorator(child));
+    }
+
+    // Pass-through methods
     @Override
     public int get_post_Id() {
         return original_post.get_post_Id();
@@ -40,21 +55,12 @@ public class HashtagDecorator implements SocialComposite {
     }
 
     @Override
-    public List<SocialComposite> get_post_replies() {
-        return original_post.get_post_replies();
-    }
-
-    @Override
-    public void add_reply_under_post(SocialComposite child) {
-        original_post.add_reply_under_post(child);
-    }
-
-    @Override
     public void accept(SocialVisitor visitor) {
-        // we just forward to the original_post:
+        // Just forward to the original
         original_post.accept(visitor);
     }
 
+    // Hashtag logic
     public String getHashtag() {
         return hashtag;
     }
@@ -66,11 +72,13 @@ public class HashtagDecorator implements SocialComposite {
         }
     }
 
+    // Convenience methods for replies
     public void setReplyHashtag(int idx) {
-       this.replies.get(idx).setHashtag();
+        HashtagDecorator child = (HashtagDecorator) tagged_replies.get(idx);
+        child.setHashtag();
     }
 
     public String getReplyHashtag(int idx) {
-        return this.replies.get(idx).getHashtag();
+        return ((HashtagDecorator) tagged_replies.get(idx)).getHashtag();
     }
 }
