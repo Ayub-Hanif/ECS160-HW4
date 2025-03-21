@@ -13,17 +13,11 @@ import java.util.List;
  */
 public interface SocialComposite {
     int get_post_Id();
-
     String get_post_content();
-
     Timestamp get_creation_time();
-
     int get_word_count();
-
     List<SocialComposite> get_post_replies();
-
     void add_reply_under_post(SocialComposite reply);
-
     // For the Visitor pattern:
     void accept(SocialVisitor visitor);
 }

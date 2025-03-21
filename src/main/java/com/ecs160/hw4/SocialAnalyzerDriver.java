@@ -1,6 +1,5 @@
 package com.ecs160.hw4;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SocialAnalyzerDriver {
