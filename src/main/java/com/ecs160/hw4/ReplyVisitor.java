@@ -1,5 +1,13 @@
 package com.ecs160.hw4;
 
+/**
+ * This class implements the SocialVisitor interface and is used to visit
+ * posts and calculate the average number of replies for each post.
+ * 
+ * The visitor takes in a boolean weighted which determines if the average
+ * is weighted by the word count of the replies.
+ */
+
 public class ReplyVisitor implements SocialVisitor {
     private int totalTopLevelPosts = 0;
     private int totalImmediateReplies = 0;

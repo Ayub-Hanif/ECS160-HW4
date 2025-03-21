@@ -7,6 +7,12 @@ import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.models.response.OllamaResult;
 import io.github.ollama4j.utils.OptionsBuilder;
 
+/**
+ * This class uses the Ollama API to generate a hashtag for a given social media
+ * post.
+ * It uses the generate method to generate a hashtag for a given post.
+ */
+
 public class LlamaInstance {
     private static final String OLLAMA_API_URL = "http://localhost:11434/";
 
