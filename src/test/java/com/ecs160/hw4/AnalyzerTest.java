@@ -13,11 +13,11 @@ import org.junit.jupiter.api.Test;
 public class AnalyzerTest {
     static Post createPostWithString(String timestampString, int word_count) {
 
-        return new Post(0, "", Timestamp.from(Instant.parse(timestampString)), word_count);
+        return new Post(0, "", Timestamp.from(Instant.parse(timestampString)), word_count, 0);
     }
 
     static Post createPostWithTimestamp(int timestampSeconds, int word_count) {
-        return new Post(0, "", Timestamp.from(Instant.ofEpochSecond(timestampSeconds)), word_count);
+        return new Post(0, "", Timestamp.from(Instant.ofEpochSecond(timestampSeconds)), word_count, 0);
     }
 
     static void assertBetween(double actual, double lower, double upper) {

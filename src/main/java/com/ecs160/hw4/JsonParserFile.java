@@ -87,8 +87,10 @@ public class JsonParserFile {
          * We can count the number of words using this and then find the largest post.
          */
         int word_count = post_content.split("\\s+").length;
+        JsonElement likeElement = post_object.get("likeCount");
+        int like_count = (likeElement != null && !likeElement.isJsonNull()) ? likeElement.getAsInt() : 0;
 
-        return new Post(postId, post_content, when_created, word_count);
+        return new Post(postId, post_content, when_created, word_count, like_count);
     }
 
     private void parse_replies(JsonArray replies_array, Post parent_posts) {

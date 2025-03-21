@@ -1,5 +1,6 @@
 package com.ecs160.hw4;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class SocialAnalyzerDriver {
@@ -22,10 +23,20 @@ public class SocialAnalyzerDriver {
         init_db(data_base, config.getJsonFilePath());
 
         List<Post> post_list = data_base.get_posts_db();
+        post_list.sort(Comparator.comparing(Post::get_like_count).reversed());
+
         Analyzer analyzer = new Analyzer(post_list);
         System.out.println("Total posts: " + analyzer.count_total_posts());
         System.out.println("Average number of replies: " + analyzer.calc_avg_replies(config.isWeighted()));
         System.out.println("Average duration between replies: " + analyzer.get_format_duration());
+
+        // Process top 10 posts
+        List<Post> topPosts = post_list.subList(0, Math.min(10, post_list.size()));
+        for (Post post : topPosts) {
+            HashtagDecorator hashtagDecorator = new HashtagDecorator(post);
+            hashtagDecorator.setHashtag();
+            System.out.println("Post ID: " + post.get_post_Id() + " Hashtag: " + hashtagDecorator.getHashtag());
+        }
 
     }
 

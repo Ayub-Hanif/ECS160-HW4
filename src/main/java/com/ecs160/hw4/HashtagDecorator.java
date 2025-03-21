@@ -4,12 +4,11 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public class HashtagDecorator implements SocialComposite {
-    private final SocialComposite original_post;  // The original Post/Thread
+    private final SocialComposite original_post; // The original Post/Thread
     private String hashtag;
 
-    public HashtagDecorator(SocialComposite original_post, String hashtag) {
+    public HashtagDecorator(SocialComposite original_post) {
         this.original_post = original_post;
-        this.hashtag = hashtag;
     }
 
     // We wrapped original_post object:
@@ -18,7 +17,7 @@ public class HashtagDecorator implements SocialComposite {
     public int get_post_Id() {
         return original_post.get_post_Id();
     }
-    
+
     @Override
     public int get_word_count() {
         return original_post.get_word_count();
@@ -54,8 +53,10 @@ public class HashtagDecorator implements SocialComposite {
         return hashtag;
     }
 
-    public void setHashtag(String newHashTag) {
-        this.hashtag = newHashTag;
+    public void setHashtag() {
+        if (this.hashtag == null) {
+            LlamaInstance llamaInstance = new LlamaInstance();
+            this.hashtag = llamaInstance.generateHashtag(this.get_post_content());
+        }
     }
 }
-

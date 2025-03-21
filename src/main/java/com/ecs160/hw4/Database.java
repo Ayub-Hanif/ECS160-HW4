@@ -48,6 +48,7 @@ public class Database {
 
         fields.put("creation_time", String.valueOf(post.get_creation_time().getTime()));
         fields.put("word_count", String.valueOf(post.get_word_count()));
+        fields.put("like_count", String.valueOf(post.get_like_count()));
 
         fields.put("parent_post_id", parent_post_Id == null ? "NULL" : String.valueOf(parent_post_Id));
         jedis.hset(key, fields);
@@ -105,13 +106,15 @@ public class Database {
         String content = fields.getOrDefault("post_content", "");
         String timeStr = fields.getOrDefault("creation_time", "0");
         String wordCountStr = fields.getOrDefault("word_count", "0");
+        String likeCountStr = fields.getOrDefault("like_count", "0");
 
         long timeMillis = Long.parseLong(timeStr);
         Timestamp creationTime = new Timestamp(timeMillis);
 
         int wc = Integer.parseInt(wordCountStr);
+        int like_count = Integer.parseInt(likeCountStr);
 
-        return new Post(postId, content, creationTime, wc);
+        return new Post(postId, content, creationTime, wc, like_count);
     }
 
     public void close() {
