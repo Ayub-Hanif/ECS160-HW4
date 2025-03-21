@@ -26,6 +26,7 @@ public class SocialAnalyzerDriver {
         post_list.sort(Comparator.comparing(Post::get_like_count).reversed());
 
         Analyzer analyzer = new Analyzer(post_list);
+        System.out.println("\n--------------------------------- Stats --------------------------------\n");
         System.out.println("Total posts: " + analyzer.count_total_posts());
         System.out.println("Average number of replies: " + analyzer.calc_avg_replies(config.isWeighted()));
         System.out.println("Average duration between replies: " + analyzer.get_format_duration());
@@ -33,13 +34,15 @@ public class SocialAnalyzerDriver {
 
         // Process top 10 posts
         List<Post> topPosts = post_list.subList(0, Math.min(10, post_list.size()));
-
+        int z = 1;
         for (Post post : topPosts) {
-
+            if(z != 1) {
+                System.out.println("\n--------------------------------- next post --------------------------------\n");
+            }
             HashtagDecorator hashtagDecorator = new HashtagDecorator(post);
             hashtagDecorator.setHashtag();
 
-            System.out.println(hashtagDecorator.get_post_content() + " " + hashtagDecorator.getHashtag() + "\n");
+            System.out.println( "POST #"+ (z++) + ": "+ hashtagDecorator.get_post_content() + " " + hashtagDecorator.getHashtag() + "\n");
 
              List<SocialComposite> replies = hashtagDecorator.get_post_replies();
             for (int i = 0; i < Math.min(2, replies.size()); i++) {
@@ -48,10 +51,11 @@ public class SocialAnalyzerDriver {
                 String childContent = replies.get(i).get_post_content();
                 String childHashtag = hashtagDecorator.getReplyHashtag(i);
 
-                System.out.println("Replies --> " + childContent + " " + childHashtag);
+                System.out.println("Reply #"+ (i+1) +"--> "+ childContent + " " + childHashtag);
             }
-            System.out.println("--------------------------------- next post --------------------------------\n");
+            
         }
+        System.out.println("--------------------------------- END!!! --------------------------------\n");
     }
 
     private static void init_db(Database data_base, String filePath) {
