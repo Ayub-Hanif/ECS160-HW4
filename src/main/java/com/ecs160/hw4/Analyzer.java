@@ -2,7 +2,6 @@ package com.ecs160.hw4;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -28,7 +27,11 @@ public class Analyzer {
     }
 
     public int count_total_posts() {
-        return posts.size();
+        CountingVisitor countingVisitor = new CountingVisitor();
+        for (SocialComposite c : posts) {
+            countingVisitor.visit((Post) c);
+        }
+        return countingVisitor.getCount();
     }
 
     /**
@@ -36,32 +39,11 @@ public class Analyzer {
      * Because we ignore deeper replies-of-replies, this is just immediate children.
      */
     public double calc_avg_replies(boolean weighted) {
-        if (this.count_total_posts() == 0) {
-            return 0;
+        ReplyVisitor replyVisitor = new ReplyVisitor(weighted);
+        for (SocialComposite c : posts) {
+            replyVisitor.visit((Post) c);
         }
-        if (!weighted) {
-            int total_post_replies = 0;
-            for (Post p : posts) {
-                total_post_replies += p.get_post_replies().size();
-            }
-            return (double) total_post_replies / this.count_total_posts();
-        } else {
-            if (this.longest_post_word_count == -1) {
-                this.longest_post_word_count = Collections.max(posts, new SortByWordCount()).get_word_count();
-            }
-            double total_post_weights = 0;
-            for (Post p : posts) {
-                double current_post_weight = 0;
-                for (SocialComposite replyComposite : p.get_post_replies()) {
-                    if (replyComposite instanceof Post) {
-                        Post reply = (Post) replyComposite;
-                        current_post_weight += 1 + ((((double) reply.get_word_count()) / this.longest_post_word_count));
-                    }
-                }
-                total_post_weights += current_post_weight;
-            }
-            return total_post_weights / this.count_total_posts();
-        }
+        return replyVisitor.getAverageReplies();
     }
 
     public double calc_avg_duration() {
