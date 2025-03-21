@@ -29,15 +29,21 @@ public class SocialAnalyzerDriver {
         System.out.println("Total posts: " + analyzer.count_total_posts());
         System.out.println("Average number of replies: " + analyzer.calc_avg_replies(config.isWeighted()));
         System.out.println("Average duration between replies: " + analyzer.get_format_duration());
+        System.out.println("--------------------------------- top 10 posts --------------------------------\n");
 
+        String replies = "";
         // Process top 10 posts
         List<Post> topPosts = post_list.subList(0, Math.min(10, post_list.size()));
         for (Post post : topPosts) {
             HashtagDecorator hashtagDecorator = new HashtagDecorator(post);
             hashtagDecorator.setHashtag();
-            //System.out.println("Post ID: " + post.get_post_Id() + " Hashtag: " + hashtagDecorator.getHashtag());
 
-            System.out.println(hashtagDecorator.get_post_content() + " " + hashtagDecorator.getHashtag());
+            System.out.println(hashtagDecorator.get_post_content() + " " + hashtagDecorator.getHashtag() + "\n");
+            for (int i = 0; i < Math.min(2, hashtagDecorator.get_post_replies().size()); i++) {
+                replies = hashtagDecorator.get_post_replies().get(i).get_post_content();
+                System.out.println("Replies --> " + replies + " " + hashtagDecorator.getReplyHashtag(i));
+            }
+            System.out.println("--------------------------------- next post --------------------------------\n");
         }
     }
 

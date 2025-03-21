@@ -1,18 +1,19 @@
 package com.ecs160.hw4;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HashtagDecorator implements SocialComposite {
     private final SocialComposite original_post; // The original Post/Thread
     private String hashtag;
+    private List<HashtagDecorator> replies = new ArrayList<HashtagDecorator>();
+
 
     public HashtagDecorator(SocialComposite original_post) {
         this.original_post = original_post;
-        for (SocialComposite reply : original_post.get_post_replies()) {
-            if (!(reply instanceof HashtagDecorator)) {
-                reply = new HashtagDecorator(reply);
-            }
+        for (int i = 0; i < original_post.get_post_replies().size(); i++) {
+            replies.add(new HashtagDecorator(original_post.get_post_replies().get(i)));
         }
     }
 
@@ -66,10 +67,10 @@ public class HashtagDecorator implements SocialComposite {
     }
 
     public void setReplyHashtag(int idx) {
-        ((HashtagDecorator) this.original_post.get_post_replies().get(idx)).setHashtag();
+       this.replies.get(idx).setHashtag();
     }
 
     public String getReplyHashtag(int idx) {
-        return ((HashtagDecorator) this.original_post.get_post_replies().get(idx)).getHashtag();
+        return this.replies.get(idx).getHashtag();
     }
 }
