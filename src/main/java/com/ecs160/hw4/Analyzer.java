@@ -2,6 +2,7 @@ package com.ecs160.hw4;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -69,4 +70,5 @@ public class Analyzer {
         Duration duration = Duration.ofSeconds((long) avg_duration);
         return LocalTime.ofSecondOfDay(duration.getSeconds()).toString();
     }
+
 }
